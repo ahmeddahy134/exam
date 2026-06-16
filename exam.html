@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compiler Design — Complete Exam Bank</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --purple-dark: #3C3489;
+    --teal: #0F6E56;
+    --teal-light: #E1F5EE;
+    --coral: #993C1D;
+    --coral-light: #FAECE7;
+    --gray: #888780;
+    --gray-light: #F1EFE8;
+    --text: #2C2C2A;
+    --text-muted: #5F5E5A;
+    --border: rgba(0,0,0,0.12);
+    --bg: #fff;
+    --bg-sec: #F8F7F4;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-sec); color: var(--text); min-height: 100vh; }
+
+  /* ── Header ── */
+  .site-header { background: var(--purple); color: #fff; padding: 1.5rem 1.5rem 1.2rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(83,74,183,0.25); }
+  .header-inner { max-width: 900px; margin: 0 auto; }
+  .site-header h1 { font-size: 1.35rem; font-weight: 600; margin-bottom: 4px; }
+  .site-header p { font-size: 0.82rem; opacity: 0.82; margin-bottom: 10px; }
+  .progress-wrap { background: rgba(255,255,255,0.25); border-radius: 99px; height: 5px; }
+  .progress-bar { background: #fff; border-radius: 99px; height: 5px; width: 0%; transition: width .4s; }
+
+  /* ── Stats ── */
+  .stats-bar { display: flex; gap: 10px; flex-wrap: wrap; max-width: 900px; margin: 1rem auto 0; padding: 0 1rem; }
+  .stat { background: var(--bg); border-radius: var(--radius); padding: 8px 14px; font-size: 0.78rem; border: 0.5px solid var(--border); flex: 1; min-width: 90px; }
+  .stat span { display: block; font-size: 1.2rem; font-weight: 600; }
+  .stat.correct span { color: var(--teal); }
+  .stat.wrong span { color: var(--coral); }
+  .stat.score span { color: var(--purple); }
+
+  /* ── Section Nav ── */
+  .section-nav { max-width: 900px; margin: 1rem auto; padding: 0 1rem; display: flex; gap: 6px; flex-wrap: wrap; }
+  .snav-btn { padding: 5px 13px; font-size: 0.74rem; border: 0.5px solid var(--border); border-radius: 99px; cursor: pointer; background: var(--bg); color: var(--text-muted); transition: all .15s; }
+  .snav-btn:hover { border-color: var(--purple); color: var(--purple); }
+  .snav-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+
+  /* ── Main layout ── */
+  .main { max-width: 900px; margin: 0 auto; padding: 0 1rem 4rem; }
+
+  /* ── Question card ── */
+  .q-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.25rem 1rem; margin-bottom: 1rem; transition: box-shadow .2s; }
+  .q-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .q-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .q-num { font-size: 0.72rem; font-weight: 600; color: #fff; background: var(--purple); padding: 2px 8px; border-radius: 99px; }
+  .q-sec { font-size: 0.72rem; color: var(--text-muted); }
+  .q-src { font-size: 0.68rem; background: var(--gray-light); color: var(--gray); padding: 2px 7px; border-radius: 99px; margin-left: auto; }
+  .q-text { font-size: 0.93rem; line-height: 1.6; color: var(--text); margin-bottom: 0.9rem; }
+  .q-text code { background: var(--gray-light); padding: 1px 5px; border-radius: 4px; font-family: monospace; font-size: 0.88em; }
+
+  /* ── Options ── */
+  .options { display: flex; flex-direction: column; gap: 7px; }
+  .opt { display: flex; align-items: flex-start; gap: 10px; padding: 9px 13px; border: 0.5px solid var(--border); border-radius: var(--radius); cursor: pointer; font-size: 0.88rem; line-height: 1.5; background: var(--bg); color: var(--text); transition: all .15s; text-align: left; width: 100%; }
+  .opt:hover { background: var(--gray-light); border-color: var(--gray); }
+  .opt.selected { border-color: var(--purple); background: var(--purple-light); color: #26215C; }
+  .opt.correct { border-color: var(--teal); background: var(--teal-light); color: #04342C; }
+  .opt.wrong { border-color: var(--coral); background: var(--coral-light); color: #4A1B0C; }
+  .opt.reveal-correct { border-color: var(--teal) !important; background: var(--teal-light) !important; }
+  .opt-letter { font-weight: 700; min-width: 20px; font-size: 0.82rem; margin-top: 1px; }
+
+  /* ── Feedback ── */
+  .feedback { margin-top: 10px; padding: 9px 13px; border-radius: var(--radius); font-size: 0.83rem; line-height: 1.5; }
+  .feedback.ok { background: var(--teal-light); color: #04342C; border: 0.5px solid #5DCAA5; }
+  .feedback.ko { background: var(--coral-light); color: #4A1B0C; border: 0.5px solid #F0997B; }
+
+  /* ── Navigation ── */
+  .nav-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 1.25rem; }
+  .btn { padding: 8px 18px; border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--text); font-size: 0.85rem; cursor: pointer; transition: all .15s; }
+  .btn:hover { background: var(--gray-light); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .btn.primary:hover { background: var(--purple-dark); }
+  .btn.check { background: var(--teal-light); color: var(--teal); border-color: var(--teal); }
+
+  /* ── Result Screen ── */
+  #result-screen { display: none; max-width: 900px; margin: 2rem auto; padding: 0 1rem 4rem; }
+  .result-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 2rem; text-align: center; margin-bottom: 1.5rem; }
+  .result-pct { font-size: 4rem; font-weight: 700; color: var(--purple); line-height: 1; }
+  .result-grade { font-size: 1.1rem; color: var(--text-muted); margin: 8px 0 1.5rem; }
+  .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 1.5rem 0; text-align: left; }
+  .res-stat { background: var(--bg-sec); border-radius: var(--radius); padding: 10px 14px; }
+  .res-stat .rl { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 3px; }
+  .res-stat .rv { font-size: 1.2rem; font-weight: 600; color: var(--text); }
+  .q-map { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin: 1.2rem 0; }
+  .q-dot { width: 22px; height: 22px; border-radius: 4px; font-size: 9px; display: flex; align-items: center; justify-content: center; font-weight: 600; cursor: pointer; }
+  .q-dot.c { background: var(--teal); color: #fff; }
+  .q-dot.w { background: var(--coral); color: #fff; }
+  .q-dot.u { background: var(--gray-light); color: var(--gray); border: 0.5px solid var(--border); }
+  .sec-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-top: 1.5rem; }
+  .sec-res { background: var(--bg-sec); border-radius: var(--radius); padding: 8px 12px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+  .sec-res-score { font-weight: 600; color: var(--purple); }
+  .result-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+
+  /* ── Exam screen ── */
+  #exam-screen { display: block; }
+
+  @media(max-width:600px){
+    .site-header h1 { font-size: 1.1rem; }
+    .q-text { font-size: 0.87rem; }
+    .opt { font-size: 0.84rem; padding: 8px 11px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <h1>Compiler Design (بناء المترجمات) — Full Exam Bank</h1>
+    <p>CS441 · Faculty of Computers &amp; Information, Assiut University · Dr. Mamdouh Farouk</p>
+    <div class="progress-wrap"><div class="progress-bar" id="prog-bar"></div></div>
+  </div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat"><div>Answered</div><span id="st-ans">0/0</span></div>
+  <div class="stat correct"><div>Correct</div><span id="st-cor">0</span></div>
+  <div class="stat wrong"><div>Wrong</div><span id="st-wrg">0</span></div>
+  <div class="stat score"><div>Score</div><span id="st-pct">—</span></div>
+</div>
+
+<div class="section-nav" id="sec-nav"></div>
+
+<!-- EXAM SCREEN -->
+<div id="exam-screen">
+  <div class="main" id="q-area"></div>
+  <div class="main" style="padding-top:0">
+    <div class="nav-row" id="nav-row">
+      <button class="btn" id="btn-prev" onclick="go(-1)">← Prev</button>
+      <button class="btn check" id="btn-check" onclick="checkCurrent()">Check answer</button>
+      <button class="btn" id="btn-next" onclick="go(1)">Next →</button>
+      <div style="flex:1"></div>
+      <button class="btn primary" onclick="showResult()">Finish exam →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="result-screen">
+  <div class="result-card">
+    <div class="result-pct" id="res-pct">0%</div>
+    <div class="result-grade" id="res-grade"></div>
+    <div class="result-grid">
+      <div class="res-stat"><div class="rl">Total questions</div><div class="rv" id="r-total">0</div></div>
+      <div class="res-stat"><div class="rl">Answered</div><div class="rv" id="r-ans">0</div></div>
+      <div class="res-stat"><div class="rl">Correct</div><div class="rv" style="color:var(--teal)" id="r-cor">0</div></div>
+      <div class="res-stat"><div class="rl">Wrong</div><div class="rv" style="color:var(--coral)" id="r-wrg">0</div></div>
+    </div>
+    <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:6px">Question map — green = correct, red = wrong, gray = skipped</div>
+    <div class="q-map" id="q-map"></div>
+    <div class="sec-results" id="sec-results"></div>
+    <div class="result-btns">
+      <button class="btn primary" onclick="restart()">Restart exam</button>
+      <button class="btn" onclick="reviewWrong()">Review wrong answers</button>
+      <button class="btn" onclick="reviewAll()">Back to exam</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  QUESTION BANK  (all PDFs + original question sheet)
+// ════════════════════════════════════════════════════════
+const SECTIONS = [
+
+// ─── 1. Compiler Design Basics ───────────────────────────────────────────────
+{name:"Compiler Design", qs:[
+{q:"What is a compiler?", o:["System program that converts instructions to machine language","System program that converts machine language to high-level language","System program that writes instructions to perform","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"Which of the following is a stage of compiler design?", o:["Semantic analysis","Intermediate code generator","Code generator","All of the mentioned"], a:3, src:"Q-Bank"},
+{q:"What is the use of a symbol table in compiler design?", o:["Finding name's scope","Type checking","Keeping all of the names of all entities in one place","All of the mentioned"], a:3, src:"Q-Bank"},
+{q:"Which of the following error can a compiler check?", o:["Syntax Error","Logical Error","Both Logical and Syntax Error","Compiler cannot check errors"], a:0, src:"Q-Bank"},
+{q:"A programmer writes a program to multiply two numbers instead of dividing. How can this error be detected?", o:["Compiler or interpreter","Compiler only","Interpreter only","None of the mentioned"], a:3, src:"Q-Bank"},
+{q:"Who is responsible for the creation of the symbol table?", o:["Assembler","Compiler","Interpreter","All of the mentioned"], a:1, src:"Q-Bank"},
+{q:"Which system program integrates individually compiled modules into an executable form?", o:["Interpreter","Assembler","Compiler","Linking Loader"], a:3, src:"Q-Bank"},
+{q:"Which is the correct definition of a compiler?", o:["Accepts a high-level program and produces an object program","Program is put into memory and executes it","Translation of assembly language into machine language","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"Which phase of the compiler is Syntax Analysis?", o:["Second","Third","First","All of the mentioned"], a:0, src:"Q-Bank"},
+{q:"Which concept of FSA is used in the compiler?", o:["Code optimization","Code generation","Lexical analysis","Parser"], a:2, src:"Q-Bank"},
+{q:"Which part of a compiler takes a stream of characters and produces a stream of words with syntactic categories?", o:["Optimizer","Scanner","Parser","None of the mentioned"], a:1, src:"Q-Bank"},
+{q:"Which of the following errors can a compiler diagnose?", o:["Logical errors only","Grammatical and logical errors","Grammatical errors only","All of the mentioned"], a:2, src:"Q-Bank"},
+{q:"In which phase of the compiler is the Lexical Analyser?", o:["Second","Third","First","All of the mentioned"], a:2, src:"Q-Bank"},
+{q:"Characters are grouped into tokens in which phase of compiler design?", o:["Code generator","Lexical analyzer","Parser","Code optimization"], a:1, src:"Q-Bank"},
+{q:"Which of the following is correct regarding an optimizer compiler?", o:["Optimize the code","Is optimized to occupy less space","Both of the mentioned","None of the mentioned"], a:3, src:"Q-Bank"},
+{q:"By whom is the symbol table created?", o:["Compiler","Interpreter","Assembler","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"Building a software such as a compiler includes many phases like …", o:["Lexical analysis only","Syntax analysis only","Semantic analysis only","All of the above (lexical, syntax, semantic, code generation)"], a:3, src:"Final 2025"},
+{q:"In the compilers, the keywords of any language can be recognized during the:", o:["Code generation","Program's parsing","Dataflow analysis","Program's lexical analysis"], a:3, src:"Final 2025 / Mid 2024"},
+{q:"What is a compiler?", o:["System program that converts high-level language to machine language","System program that converts machine language to high-level language","System program that writes instructions to perform","None of the mentioned"], a:0, src:"Final 2025"},
+{q:"The compiler improves the source code during ………………… phase", o:["Lexical analysis","Parsing","Optimizing","Semantic analysis"], a:2, src:"Mid 2024 L3"},
+{q:"The output of parsing process is a …", o:["Set of tokens","Ordered list of tokens","Semantic tree","Parse tree"], a:3, src:"Mid 2024 L3"},
+{q:"Users write programs in which language?", o:["Low-level Language","High-Level Language","Decimal-Format","Middle-Level Language"], a:1, src:"Mid 2024 L4"},
+]},
+
+// ─── 2. Lexical Analysis ─────────────────────────────────────────────────────
+{name:"Lexical Analysis", qs:[
+{q:"What is the output of the lexical analyzer?", o:["A set of RE","Syntax Tree","Set of Tokens","String Character"], a:2, src:"Q-Bank"},
+{q:"Which symbol table implementation is based on the property of locality of reference?", o:["Linear list","Search tree","Hash Table","Self Organisation"], a:2, src:"Q-Bank"},
+{q:"The lexical analyzer takes __ as input and produces a stream of __ as output.", o:["Source program, tokens","Token, source program","Either of the two","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"Parsing is also known as ________", o:["Lexical Analysis","Syntax Analysis","Semantic Analysis","Code Generation"], a:1, src:"Q-Bank"},
+{q:"Which of the following are Lexemes?", o:["Identifiers","Constants","Keywords","All of the mentioned"], a:3, src:"Q-Bank"},
+{q:"A compiler program written in a high level language is called ____", o:["Source Program","Object Program","Machine Language Program","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"The action of parsing the source program into proper syntactic classes is called ____", o:["Syntax analysis","Lexical analysis","Interpretation analysis","General syntax analysis"], a:1, src:"Q-Bank"},
+{q:"What is the task of lexical analysis?", o:["None of the mentioned","To build a literal and identifier table","To build a uniform symbol table","To build a uniform symbol table, literal and identifier table"], a:3, src:"Q-Bank"},
+{q:"____ or scanning is the process where the stream of characters is read from left to right and grouped into tokens.", o:["Lexical Analysis","Diversion","Modelling","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"What constitutes the stages of the compilation process?", o:["Feasibility study, system design, and testing","Implementation and documentation","Lexical analysis, syntax Analysis and code generation","None of the mentioned"], a:2, src:"Q-Bank"},
+{q:"Which tool is used for grouping of characters in tokens in the compiler?", o:["Parser","Code optimizer","Code generator","Scanner"], a:3, src:"Mid 2024 L4"},
+{q:"In which phase is FSA used in the compiler?", o:["Lexical analysis","Parser","Semantic Analysis","Lexical and syntax analysis"], a:0, src:"Final 2025"},
+{q:"The output of the lexical analyzer is:", o:["Parse tree","Tokens","Machine code","Intermediate code"], a:1, src:"Mid 2025 General"},
+{q:"In compiler phases, lexical analysis comes before syntax analysis.", o:["True","False"], a:0, src:"Mid 2025 General"},
+{q:"The parser (syntax analyser) takes input from …", o:["Lexical analyser","Syntactic Analyser","Semantic Analyser","None of the mentioned"], a:0, src:"Mid 2024 L3"},
+]},
+
+// ─── 3. Syntax Analysis ──────────────────────────────────────────────────────
+{name:"Syntax Analysis", qs:[
+{q:"Which phase of the compiler is Syntax Analysis?", o:["First","Second","Third","None of the mentioned"], a:1, src:"Q-Bank"},
+{q:"Syntax Analyser is also known as ____", o:["Hierarchical Analysis","Hierarchical Parsing","None of the mentioned","Hierarchical Analysis & Parsing"], a:3, src:"Q-Bank"},
+{q:"Syntax Analyser takes groups of tokens of the source program into grammatical productions.", o:["True","False"], a:0, src:"Q-Bank"},
+{q:"Where does the syntax analyser take its input from?", o:["Lexical analyser","Syntactic Analyser","Semantic Analyser","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"Parsers are expected to parse the whole code.", o:["True","False"], a:0, src:"Q-Bank"},
+{q:"A grammar for a programming language is a formal description of ____", o:["Syntax","Semantics","Structure","Library"], a:2, src:"Q-Bank"},
+{q:"Type checking is normally done during ____", o:["Lexical Analysis","Syntax Analysis","Syntax Directed Translation","Code generation"], a:2, src:"Q-Bank"},
+{q:"What does a Syntactic Analyser do?", o:["Maintain Symbol Table","Collect type of information","Create parse tree","None of the mentioned"], a:2, src:"Q-Bank"},
+{q:"In short, Syntax Analysis generates a Parse Tree.", o:["True","False"], a:0, src:"Q-Bank"},
+{q:"The process of syntax analysis is also known as:", o:["Semantic analysis","Parsing","Lexical analysis","Optimization"], a:1, src:"Mid 2025 General"},
+{q:"The parse tree represents:", o:["Hierarchical syntactic structure of source code","Machine instructions","Control flow of program","Token frequency"], a:0, src:"Mid 2025 General"},
+{q:"The syntax analysis phase checks for semantic errors in the source code.", o:["True","False"], a:1, src:"Mid 2024 L4"},
+{q:"In which parsing does the parser construct the parse tree from the start symbol and transform it into the input symbol?", o:["Bottom-up parsing","Top-down parsing","None of the above","Both a and b"], a:1, src:"Mid 2024 L4"},
+{q:"Suppose one operand is String and the other is Integer — the syntax analyser does not throw an error as it only checks whether two operands are associated with '+'.", o:["True","False"], a:0, src:"Q-Bank"},
+]},
+
+// ─── 4. Regular Expressions ──────────────────────────────────────────────────
+{name:"Regular Expressions", qs:[
+{q:"A regular expression enables a quick test to determine objects and text strings with undependable values.", o:["True","False"], a:0, src:"Q-Bank"},
+{q:"RE can be used only for values of type string and number.", o:["True","False"], a:1, src:"Q-Bank"},
+{q:"The regular expression that denotes all possible strings of even length over {0,1} is?", o:["1 + 0(1+0)*","(0+1)(1+0)*","(1+0)","(00+0111+10)*"], a:3, src:"Q-Bank"},
+{q:"The RE that gives none or many instances of x or y is?", o:["(x+y)","(x+y)*","(x*+y)","(xy)*"], a:1, src:"Q-Bank"},
+{q:"The RE in which any number of 0's is followed by any number of 1's followed by any number of 2's is?", o:["(0+1+2)*","0*1*2*","0*+1+2","(0+1)*2*"], a:1, src:"Q-Bank"},
+{q:"The regular expression for all strings of 0's and 1's with no two consecutive 0's is?", o:["(0+1)","(0+1)*","(0+ε)(1+10)*","(0+1)*011"], a:2, src:"Q-Bank"},
+{q:"The regular expression with all strings of 0's and 1's with at least two consecutive 0's is?", o:["1+(10)*","(0+1)*00(0+1)*","(0+1)*011","0*1*2*"], a:1, src:"Q-Bank"},
+{q:"Which is NOT in the set of regular expression R = (ab + abb)* bbab?", o:["ababbbbab","abbbab","ababbabbbab","abababab"], a:3, src:"Q-Bank"},
+{q:"String generated by: S->aS/bA, A->d/ccA", o:["aabccd","adabcca","abcca","abababd"], a:0, src:"Q-Bank"},
+{q:"If R is regular and Q is any language, then Pref(Q in R) is ____", o:["Non-regular","Equal","Infinite","Regular"], a:3, src:"Q-Bank"},
+{q:"The production of the form non-terminal → Λ is said to be a null production.", o:["False","True"], a:1, src:"Q-Bank"},
+{q:"Regular expressions are used to represent which language?", o:["Recursive language","Context free language","Regular language","All of the mentioned"], a:2, src:"Q-Bank"},
+{q:"The set of all strings over {a,b} in which strings ending with bb is?", o:["ab","a*bbb","(a+b)* bb","All of the mentioned"], a:2, src:"Q-Bank"},
+{q:"If P, Q, R are regular expressions and P doesn't contain ε, then R = Q + RP has unique solution:", o:["R = QP*","R = P*Q","R = RP","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"If L1 and L2 are regular languages, which are also regular? (L1+L2, L1L2, L1*)", o:["L1+L2","L1L2","L1*","All of the mentioned"], a:3, src:"Q-Bank"},
+{q:"Which RE denotes zero or more instances of a or b?", o:["a/b","(a/b)*","(ab)*","a*Ib"], a:1, src:"Q-Bank"},
+{q:"The string (a)|((b)*(c)) is equivalent to ____", o:["Empty","abcabc","b*c|a","None of the mentioned"], a:2, src:"Q-Bank"},
+{q:"The Language generated by 1(01)* and (10)*1 are equivalent.", o:["True","False"], a:0, src:"Final 2025 / Mid 2024 L3"},
+{q:"Which one of the following regular expressions represents the set of all binary strings containing the substring 101?", o:["(0|1)101(0|1)*","(1|0)101","101","(0|1)110(0|1)*"], a:0, src:"Mid 2025 General"},
+{q:"The grammar E → E+E | E*E | (E) | id is ambiguous.", o:["True","False"], a:0, src:"Mid 2025 General"},
+{q:"S → Aa | b, A → c | ε — What is FIRST(A)?", o:["{a,b}","{c,ε}","{c,a}","{ε}"], a:1, src:"Mid 2025 General"},
+{q:"Which of the following regular expressions generates all strings that start and end with the same symbol?", o:["0(0|1)*0 | 1(0|1)*1","(0|1)0(0|1)","0(0|1)*1 | 1(0|1)0","(0|1)"], a:0, src:"Mid 2025 General"},
+{q:"The RE for strings over Σ={a,b,c} with an even number of b's is?", o:["(a|c)*(b(a|c)*b(a|c)*)*","bb*(a|b)*","(a|b|c)*","(b|c)(a|b|c)*"], a:0, src:"Mid 2024 L4"},
+{q:"Which of the following is true? (01)*0 = 0(10)* ; (0|1)*0(0|1)*1(0|1) = (0|1)*01(0|1)* ; (0|1)*01(0|1)*|1*0* = (0|1)*", o:["(01)*0 = 0(10)*","(0|1)*0(0|1)*1(0|1) = (0|1)*01(0|1)*","(0|1)*01(0|1)*|1*0* = (0|1)*","None of the above"], a:0, src:"Mid 2024 L4"},
+{q:"RE for L = {w ∈ {0,1}* | w has no pair of consecutive zeros}", o:["(1|010)*","(01|0)*","(1|01)*(0|ε)","(10|01)*"], a:2, src:"Final 2025"},
+{q:"Σ={a,b,c}: The language that contains all strings that do not start with 'a'.", o:["(a|b|c)*","(b|c)(a|b|c)*","(b|c)*(a|b|c)*","None of the above"], a:1, src:"Mid 2024 L4"},
+{q:"The regular expressions denote zero or more instances of x or y is?", o:["(x+y)","(x+y)*","(x*+y)","(xy)*"], a:1, src:"Final 2025 / Mid 2024 L3"},
+]},
+
+// ─── 5. NFA / DFA ────────────────────────────────────────────────────────────
+{name:"NFA & DFA", qs:[
+{q:"The tuples for NDFA are ____", o:["∑, Q, q0, F, δ","Q, q0, F, δ","Θ, Q, q0, F, δ","F, Q, Δ, q0, δ"], a:0, src:"Q-Bank"},
+{q:"NFAs are __ DFAs.", o:["Larger than","More expressive than","Less expressive than","Equally expressive as"], a:0, src:"Q-Bank"},
+{q:"An NFA's transition function returns ____", o:["A Boolean value","A state","A set of states","An edge"], a:2, src:"Q-Bank"},
+{q:"Conversion of a DFA to an NFA ____", o:["Is impossible","Requires the subset construction","Is Chancy","Is nondeterministic"], a:1, src:"Q-Bank"},
+{q:"A regular language corresponds to ____", o:["An alphabet","Set of strings over an alphabet","A DFA only","A DFA or an NFA"], a:1, src:"Q-Bank"},
+{q:"An NFA may be converted to a DFA using ____", o:["Induction","A construction","Contradiction","Compilation"], a:1, src:"Q-Bank"},
+{q:"The subset construction shows that every NFA accepts a ____", o:["String","Function","Regular language","Context-free language"], a:2, src:"Q-Bank"},
+{q:"Which is an application of NFA?", o:["Union of two regular languages is regular","Concatenation of two regular languages is regular","Kleene closure of a regular language is regular","All of the mentioned"], a:3, src:"Q-Bank"},
+{q:"For every NFA a deterministic finite automaton (DFA) can be found that accepts the same language.", o:["True","False"], a:0, src:"Q-Bank / Final 2025 / Mid 2024 L3"},
+{q:"Like DFAs, NFAs only recognize regular languages.", o:["True","False"], a:0, src:"Q-Bank"},
+{q:"Given an NFA with N states, the maximum number of states in an equivalent minimized DFA is at least?", o:["N²","2^N","2N","N!"], a:1, src:"Q-Bank"},
+{q:"The recognizing capability of NDFA and DFA is?", o:["May be different","Must be different","Must be same","None of the mentioned"], a:2, src:"Q-Bank"},
+{q:"Which pairs of regular expressions are equivalent? (i) 1(01)* and (10)*1; (ii) x(xx)* and (xx)*x", o:["(i) only","(ii) only","Both (i) and (ii)","None of the mentioned"], a:2, src:"Q-Bank"},
+{q:"Which identities are true? (i) ε+RR*=R*; (ii) (R1R2)*R1=R1(R2R1)*; (iii) R*R*=R*", o:["Only (i)","Only (ii)","Only (iii)","All of the mentioned"], a:3, src:"Q-Bank"},
+]},
+
+// ─── 6. Context Free Grammar ─────────────────────────────────────────────────
+{name:"Context Free Grammar", qs:[
+{q:"S1: There's an algorithm to determine if L(G) is infinite. S2: There's an algorithm to determine if two CFGs generate the same language. Which is true?", o:["S1 correct, S2 not correct","Both S1 and S2 correct","Both S1 and S2 not correct","S1 not correct, S2 correct"], a:0, src:"Q-Bank"},
+{q:"If P & R are regular and PQ=R, then?", o:["Q has to be regular","Q cannot be regular","Q need not be regular","Q has to be a CFL"], a:2, src:"Q-Bank"},
+{q:"Which conversion is NOT possible algorithmically?", o:["Regular grammar to CFG","NDFA to DFA","NDPDA to DPDA","NDTM to DTM"], a:2, src:"Q-Bank"},
+{q:"Push down automata accepts which language?", o:["Context sensitive language","Context free language","Recursive language","None of the mentioned"], a:1, src:"Q-Bank"},
+{q:"A regular grammar is a ____", o:["CFG","Non CFG","English Grammar","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"Which does NOT belong to CFG?", o:["Terminal Symbol","Non terminal Symbol","Start symbol","End Symbol"], a:3, src:"Q-Bank"},
+{q:"Context-Free Grammars (CFGs) consist of:", o:["Rules","Terminals","Non-terminals","All of the above"], a:3, src:"Mid 2024 L3"},
+{q:"Which of the following rules is NOT a correct context-free rule, where non-terminals are {A, B} and terminals are {a, b}?", o:["A → a | Ba","AB → a","a → Ba","Both b and c"], a:3, src:"Final 2025 / Mid 2024 L3"},
+{q:"A context free language is called ambiguous if ____", o:["It has 2+ left derivations for some terminal string","It has 2+ right derivations for some terminal string","It has 2+ left & right derivations","None of the mentioned"], a:1, src:"Q-Bank"},
+{q:"The CFG S→A111|S1, A→A0|00 is equivalent to?", o:["{0ⁿ1ᵐ | n=2, m=3}","{0ⁿ1ᵐ | n=1, m=5}","{0ⁿ1ᵐ | n>2 and m>4}","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"The CFG S→SS|0S1|1S0|ε generates?", o:["Equal number of 0's and 1's","Unequal number of 0's and 1's","Number of 0's followed by any number of 1's","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"Consider the production of the grammar S→AA, A→aa, A→bb. Describe the language.", o:["L={aaaa,aabb,bbaa,bbbb}","L={abab,abaa,aaab,baaa}","L={aaab,baba,bbaa,bbbb}","L={aaaa,abab,bbaa,aaab}"], a:0, src:"Q-Bank / Final 2025 / Mid 2024 L3"},
+{q:"Given grammar S→(L)|a, L→L,S|S — which of the following inputs is recognized?", o:["((a,a),a)","(a,a)","((a,a,a),a)","All of the above"], a:3, src:"Q-Bank / Mid 2024 L4"},
+{q:"Is the grammar S→SS+ | SS* | a ambiguous?", o:["Yes","No","Can't say","None of these"], a:1, src:"Q-Bank"},
+{q:"Is the following grammar S→SS|a ambiguous?", o:["Yes","No","Can't say"], a:0, src:"Mid 2024 L4"},
+{q:"Consider R = R&R | R⊕R | R* | (R) | a | b | c — is this grammar ambiguous?", o:["True (Yes)","False (No)"], a:0, src:"Final 2025 / Mid 2024 L3"},
+{q:"Which grammar rules violate the requirements of an operator grammar? 1.P→QR 2.P→QsR 3.P→ε 4.P→QtRr", o:["1 only","1 and 3 only","2 and 3 only","3 and 4 only"], a:1, src:"Q-Bank"},
+{q:"Grammars that can be translated to DFAs are ____", o:["Left linear grammar","Right linear grammar","Generic grammar","All of the mentioned"], a:1, src:"Q-Bank"},
+{q:"Which of the following is not a context-free grammar rule? a)A→aB|b  b)S→aS|b  c)a→Ab  d)B→A", o:["A→aB|b","S→aS|b","a→Ab","B→A"], a:2, src:"Mid 2025 General"},
+{q:"G1: S1→AB|aaB, A→a|Aa, B→b  AND  G2: S2→aS2bS2|bS2aS2|λ. Which statement is true?", o:["G1 ambiguous, G2 not ambiguous","G1 ambiguous, G2 ambiguous","G1 not ambiguous, G2 ambiguous","G1 not ambiguous, G2 not ambiguous"], a:1, src:"Final 2025"},
+]},
+
+// ─── 7. FIRST & FOLLOW Sets ──────────────────────────────────────────────────
+{name:"FIRST & FOLLOW Sets", qs:[
+{q:"Consider S→aAbB|bAaB|ε, A→S, B→S. The FOLLOW set of non-terminal A is:", o:["{a,b,ε}","{a,b}","{a,b,$}","{b}"], a:1, src:"Final 2025"},
+{q:"Consider S→aAbB|bAaB|ε, A→S, B→S. The FIRST set of non-terminal A is:", o:["{a,b,ε}","{a,b}","{a,b,$}","{b}"], a:0, src:"Final 2025"},
+{q:"What is the FOLLOW of start symbol in: S→aB|ε, B→bC|ε, C→cS|ε?", o:["a","b","c","$"], a:3, src:"Q-Bank / Mid 2024 L4"},
+{q:"Consider grammar S→aSa|bSb|A, A→aBb, B→aB|bB|ε. What is FIRST(S)?", o:["{a,ε}","{a,b,ε}","{a,b}","{$}"], a:1, src:"Mid 2024 L4"},
+{q:"Consider grammar S→aSa|bSb|A, A→aBb, B→aB|bB|ε. What is FOLLOW(A)?", o:["{a,$}","{a,b,$}","{a,b}","{$}"], a:3, src:"Mid 2024 L4"},
+{q:"Consider grammar S→aSa|bSb|A, A→aBb, B→aB|bB|ε. What is FOLLOW(S)?", o:["{a,$}","{a,b,$}","{a,b}","{$}"], a:1, src:"Mid 2024 L4"},
+{q:"Consider grammar S→aSa|bSb|A, A→aBb, B→aB|bB|ε. What is FIRST(B)?", o:["{a,b,ε}","{a,ε}","{a,b}","{ε}"], a:0, src:"Mid 2024 L4"},
+{q:"S→AB, A→aA|ε, B→b|c — Compute FIRST(S).", o:["{a,b,c}","{a,b}","{a}","{a,ε}"], a:0, src:"Mid 2025 General"},
+{q:"S→ABC, A→a|ε, B→bB|ε, C→c — Which is the correct FOLLOW(B)?", o:["{c,$}","{b,c}","{c}","{a,c,$}"], a:0, src:"Mid 2025 General"},
+]},
+
+// ─── 8. Top-Down Parsing / LL(1) ─────────────────────────────────────────────
+{name:"Top-Down Parsing / LL(1)", qs:[
+{q:"Which derivation does a top-down parser use?", o:["Leftmost derivation","Leftmost derivation in reverse","Rightmost derivation","Rightmost derivation in reverse"], a:0, src:"Q-Bank / Final 2025"},
+{q:"Which derivation is generated by the top-down parser?", o:["Right-most derivation in reverse","Left-most derivation in reverse","Right-most derivation","Left-most derivation"], a:3, src:"Mid 2024 L4"},
+{q:"Which of the following suffices to convert an arbitrary CFG to an LL(1) grammar?", o:["Removing left recursion only","Factoring the grammar alone","Factoring & left recursion removal","None of the mentioned"], a:3, src:"Q-Bank"},
+{q:"The grammar A→AA|(A)|ε is not suitable for predictive-parsing because the grammar is:", o:["Ambiguous","Left recursive","Right recursive","An operator grammar"], a:1, src:"Q-Bank"},
+{q:"A grammar that produces more than one parse tree for some sentence is called ____", o:["Unambiguous","Regular","None of the mentioned","Ambiguous"], a:3, src:"Mid 2024 L4"},
+{q:"LL(1) parsers can handle left-recursive grammars.", o:["True","False"], a:1, src:"Mid 2025 General"},
+{q:"Which one of the following is a top-down parser?", o:["Recursive descent parser","Operator precedence parser","An LR(k) parser","An LALR(k) parser"], a:0, src:"Q-Bank / Final 2025"},
+{q:"Which statement is false about top-down parsing? (a) Left/right most derivations can be in unambiguous grammar (b) LL(1) is top-down (c) LALR more powerful than SLR (d) Ambiguous grammar can't be LR(k)", o:["(a) Left/right most derivations can be in unambiguous grammar","(b) LL(1) parser is a top-down parser","(c) LALR is more powerful than SLR","(d) Ambiguous grammar can't be LR(k)"], a:0, src:"Q-Bank"},
+{q:"Consider grammar: S→T*P, T→U|T*U, P→Q+P|Q, Q→Id, U→Id. Which is TRUE?", o:["+ is left associative, * is right associative","+ is right associative, * is left associative","Both + and * are right associative","Both + and * are left associative"], a:1, src:"Final 2025"},
+{q:"Match: P-Regular expression, Q-Pushdown automata, R-Dataflow analysis, S-Register allocation with 1-Syntax analysis, 2-Code generation, 3-Lexical analysis, 4-Code optimization", o:["P-4,Q-1,R-2,S-3","P-3,Q-1,R-4,S-2","P-3,Q-4,R-1,S-2","P-2,Q-1,R-4,S-3"], a:1, src:"Q-Bank"},
+{q:"LR parsers are attractive because ____", o:["Can recognize CFG for almost all programming constructs","Does not backtrack","Both of the mentioned","None of the mentioned"], a:2, src:"Q-Bank"},
+{q:"A graph representation of a derivation is ____", o:["The parse tree","Oct tree","Binary tree","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"What is the purpose of left factoring in grammar?", o:["To eliminate ambiguity","To eliminate left recursion","To make grammar suitable for predictive parsing","To simplify terminals"], a:2, src:"Mid 2025 General"},
+{q:"Removing left recursion from A→Aα|β results in which grammar?", o:["A→βA', A'→αA'|ε","A→β|α","A→αA'|β","A→Aβ|α"], a:0, src:"Mid 2025 General"},
+{q:"Which grammar rule is immediately left recursive?", o:["A→bA|c","A→Aa|b","A→aA|bA","A→a|b"], a:1, src:"Mid 2025 General"},
+{q:"S→A|d, A→aA|ε — Build LL(1) table entries for M[S,a] and M[S,d], and decide if grammar is LL(1).", o:["M[S,a]=S→A, M[S,d]=S→d; grammar is LL(1)","M[S,a]=S→A, M[S,d]=S→A; conflict — not LL(1)","M[S,a]=S→d, M[S,d]=S→d; grammar is LL(1)","M[S,a]=S→A, M[S,d]=S→d; grammar not LL(1)"], a:0, src:"Mid 2025 General"},
+{q:"Is the following grammar LL(1)? S→F|H, F→p|c, H→d|c", o:["Yes","No"], a:1, src:"Final 2025 / Mid 2024 L3/L4"},
+{q:"Consider: S→daT|Rf, T→aS|baT|ε, R→caTR|ε — for the partially-filled LL(1) parsing table, which combination is correct?", o:["A: [1]S→Rf, [2]S→Rf, [3]T→ε, [4]T→ε","B: [1]blank, [2]S→Rf, [3]T→ε, [4]T→ε","C: [1]S→Rf, [2]blank, [3]blank, [4]T→ε","D: [1]blank, [2]S→Rf, [3]blank, [4]blank"], a:0, src:"Final 2025"},
+{q:"Which grammar equivalent to E→E-T|T, T→T+F|F, F→(E)|id is NOT left recursive?", o:["E→E-T|T, T→T+F|F, F→(E)|id","E→TE', E'→-TE'|ε, T→T+F|F, F→(E)|id","E→TX, X→-TX|ε, T→FY, Y→+FY|ε, F→(E)|id","E→TX|(TX), X→-TX|+TX|ε, T→id"], a:2, src:"Q-Bank / Final 2025"},
+{q:"S→iEtS|iEtSeS|a, E→b — this grammar is:", o:["LL(1)","Not LL(1) due to ambiguity","Not LL(1) due to left recursion","Right recursive and LL(1)"], a:1, src:"Mid 2025 General"},
+{q:"Given the following expression grammar: E→E*F|F+E|F, F→F-F|id. Which is true?", o:["* has higher precedence than +","– has higher precedence than *","+ and – have same precedence","+ has higher precedence than *"], a:1, src:"Q-Bank / Mid 2024 L4"},
+]},
+
+// ─── 9. Bottom-Up Parsing / LR ───────────────────────────────────────────────
+{name:"Bottom-Up Parsing / LR", qs:[
+{q:"A bottom-up parser generates ____", o:["Right most derivation","Rightmost derivation in reverse","Leftmost derivation","Leftmost derivation in reverse"], a:1, src:"Q-Bank"},
+{q:"An LR-parser can detect a syntactic error as soon as ____", o:["The parsing starts","It is possible to do so a left-to-right scan of the input","It is possible to do so a right-to-left scan of the input","Parsing ends"], a:1, src:"Final 2025"},
+{q:"When there is a reduce/reduce conflict?", o:["A state does not know whether to shift using rule i or j","A state does not know whether to shift or reduce using rule i or j","A state does not know whether to reduce using rule i or j","None of the mentioned"], a:2, src:"Final 2025"},
+{q:"If a state does not know whether to make a shift or reduction for a terminal, it is called:", o:["Shift/reduce conflict","Reduce/shift conflict","Shift conflict","Reduce conflict"], a:0, src:"Final 2025"},
+{q:"Shift reduce parsers are ____", o:["Top down Parser","Bottom Up parser","May be top down or bottom up","None of the mentioned"], a:1, src:"Q-Bank"},
+{q:"Maximum number of reduce moves for a grammar with no ε- and unit-productions to parse a string with n tokens?", o:["n/2","n-1","2n-1","2^n"], a:1, src:"Q-Bank"},
+{q:"A parser with the valid prefix property is advantageous because it ____", o:["Detects errors immediately","None of the mentioned","Errors are passed to the next phase","All of the mentioned"], a:2, src:"Q-Bank"},
+{q:"In an absolute loading scheme, which loader function is accomplished by the assembler?", o:["Re-allocation","Allocation","Linking","Loading"], a:0, src:"Q-Bank"},
+{q:"Relocating bits used by relocating loader are specified by ____", o:["Relocating loader itself","Linker","Assembler","Macro Processor"], a:1, src:"Q-Bank"},
+{q:"The linker ____", o:["Is similar to interpreter","Uses source code as its input","Is required to create an executable module","None of the mentioned"], a:2, src:"Q-Bank / Final 2025"},
+{q:"For two LR(1) item sets differing only in lookaheads, which statement is FALSE?", o:["Cannot be merged since lookaheads are different","Can be merged but will result in S-R conflict","Can be merged but will result in R-R conflict","Cannot be merged since goto on c leads to two different sets"], a:3, src:"Q-Bank"},
+]},
+
+// ─── 10. Code Generation & Intermediate Code ──────────────────────────────────
+{name:"Code Generation & Intermediate Code", qs:[
+{q:"Input to code generator is ____", o:["Source code","Intermediate code","Target code","All of the mentioned"], a:1, src:"Q-Bank"},
+{q:"An intermediate code form is ____", o:["Postfix Notation","Syntax Trees","Three address code","All of the mentioned"], a:3, src:"Q-Bank"},
+{q:"Why is generation of intermediate code based on an abstract machine model useful in compilers?", o:["Writing for intermediate code generation","Portability of the front end","Implementation of lexical and syntax analysis is made easier","All of the mentioned"], a:2, src:"Q-Bank"},
+{q:"Running time of a program depends on ____", o:["Addressing mode","Order of computations","Usage of machine idioms","All of the mentioned"], a:3, src:"Q-Bank"},
+{q:"An optimizer compiler ____", o:["Is optimized to occupy less space","Both optimize the code and occupy less space","Optimize the code","None of the mentioned"], a:3, src:"Q-Bank"},
+{q:"Which of the following suffices to convert an arbitrary CFG to an LL(1) grammar?", o:["Removing left recursion alone","Factoring the grammar alone","Removing left recursion + factoring","None of the mentioned"], a:3, src:"Q-Bank"},
+]},
+
+// ─── 11. Token Analysis (specific exam questions) ─────────────────────────────
+{name:"Tokens & Misc", qs:[
+{q:"Given the input: sum = a + ba * 5;  Which is the correct token sequence?", o:["sum,=,a,+,b,a,*,5,;","sum=,a+,b*,5","sum,a,b,5","sum,=,a,+,ba,*,5,;"], a:0, src:"Mid 2025 General"},
+{q:"Which is NOT a symbol table truth? (a) Labels are symbols (b) Table has name/address/value (c) Processes assembler directives (d) Created during pass 1", o:["All labels of instructions are symbols","Table has entry for symbol name address value","Perform processing of assembler directives","Created during pass 1"], a:2, src:"Q-Bank"},
+{q:"In operator precedence parsing, precedence relations are defined ____", o:["For all pair of non-terminals","For all pair of terminals","To delimit the handle","None of the mentioned"], a:0, src:"Q-Bank"},
+{q:"In (Z,*) where n*m = maximum(n,m), which statement is true?", o:["(Z,*) is a monoid","(Z,*) is an algebraic group","(Z,*) is a group","None of the mentioned"], a:3, src:"Q-Bank"},
+{q:"The address code involves ____", o:["Exactly 3 address","At most Three address","No unary operators","None of the mentioned"], a:3, src:"Q-Bank"},
+{q:"Consider grammar S→F|H, F→p|c, H→d|c. S1: All strings parseable with LL(1). S2: All strings parseable with LR(1).", o:["Only S1","Only S2","Both S1 & S2","None of the mentioned"], a:3, src:"Q-Bank"},
+{q:"Which symbol table implementation is based on the property of locality of reference?", o:["Hash Table","Search tree","Self organizing list","Linear list"], a:2, src:"Q-Bank"},
+{q:"S1: L2–L1 is recursively enumerable (L1 recursive, L2 r.e.). S2: The set of all Turing machines is countable. Which is true?", o:["S1 correct, S2 not correct","Both S1 and S2 correct","Both not correct","S1 not correct, S2 correct"], a:1, src:"Q-Bank"},
+{q:"What is the process of assigning load addresses to parts of a program called?", o:["Assembly","Parsing","Relocation","Symbol resolute"], a:2, src:"Q-Bank"},
+{q:"Let L1={wxw^R|w,x∈{a,b}*,|w|,|x|>0}, L2={aⁿbᵐ|m≠n}, L3={aᵖbqcr|p,q,r≥0}. Which are regular?", o:["L1 and L3 only","L2","L2 and L3 only","L3 only"], a:0, src:"Q-Bank"},
+]}
+
+];
+
+// ════════════════════════════════════════════════════════
+//  BUILD FLAT LIST
+// ════════════════════════════════════════════════════════
+const ALL = [];
+SECTIONS.forEach((sec, si) => {
+  sec.qs.forEach(q => {
+    ALL.push({ ...q, secName: sec.name, secIdx: si, idx: ALL.length });
+  });
+});
+const TOTAL = ALL.length;
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+let answers  = new Array(TOTAL).fill(null);
+let revealed = new Array(TOTAL).fill(false);
+let cur      = 0;
+let secFilter = -1;
+
+function filtered() {
+  if (secFilter === -1) return ALL.map((_,i)=>i);
+  return ALL.map((_,i)=>i).filter(i => ALL[i].secIdx === secFilter);
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════
+function renderSectionNav() {
+  const el = document.getElementById('sec-nav');
+  let h = `<button class="snav-btn ${secFilter===-1?'active':''}" onclick="setSec(-1)">All (${TOTAL})</button>`;
+  SECTIONS.forEach((s,i)=>{
+    h += `<button class="snav-btn ${secFilter===i?'active':''}" onclick="setSec(${i})">${s.name} (${s.qs.length})</button>`;
+  });
+  el.innerHTML = h;
+}
+
+function updateStats() {
+  const ans = answers.filter(a=>a!==null).length;
+  const cor = answers.filter((a,i)=>a!==null&&a===ALL[i].a).length;
+  document.getElementById('st-ans').textContent = ans+'/'+TOTAL;
+  document.getElementById('st-cor').textContent = cor;
+  document.getElementById('st-wrg').textContent = (ans-cor);
+  document.getElementById('st-pct').textContent = ans>0?Math.round(cor/ans*100)+'%':'—';
+  document.getElementById('prog-bar').style.width = Math.round(ans/TOTAL*100)+'%';
+}
+
+function renderQ() {
+  const fi = filtered();
+  const pos = fi.indexOf(cur);
+  const q = ALL[cur];
+  const ans = answers[cur];
+  const rev = revealed[cur];
+  const letters = ['a','b','c','d','e'];
+
+  let optsHtml = q.o.map((opt,oi)=>{
+    let cls = 'opt';
+    if (rev) {
+      if (oi === q.a) cls += ' correct';
+      else if (oi === ans) cls += ' wrong';
+    } else if (oi === ans) cls += ' selected';
+    return `<button class="${cls}" onclick="choose(${cur},${oi})">
+      <span class="opt-letter">${letters[oi]})</span>${opt}
+    </button>`;
+  }).join('');
+
+  let fb = '';
+  if (rev && ans !== null) {
+    if (ans === q.a) fb = `<div class="feedback ok">✓ Correct!</div>`;
+    else fb = `<div class="feedback ko">✗ Incorrect. Correct answer: <strong>${letters[q.a]}) ${q.o[q.a]}</strong></div>`;
+  }
+
+  document.getElementById('q-area').innerHTML = `
+    <div class="q-card">
+      <div class="q-meta">
+        <span class="q-num">Q${cur+1}</span>
+        <span class="q-sec">${q.secName}</span>
+        <span class="q-src">${q.src}</span>
+      </div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">${optsHtml}</div>
+      ${fb}
+    </div>`;
+
+  // Nav buttons
+  document.getElementById('btn-prev').disabled = pos <= 0;
+  document.getElementById('btn-next').disabled = pos >= fi.length - 1;
+  document.getElementById('btn-check').disabled = ans === null || rev;
+
+  updateStats();
+}
+
+window.choose = function(qIdx, oi) {
+  if (revealed[qIdx]) return;
+  answers[qIdx] = oi;
+  renderQ();
+};
+window.checkCurrent = function() {
+  if (answers[cur] === null) return;
+  revealed[cur] = true;
+  renderQ();
+};
+window.go = function(dir) {
+  const fi = filtered();
+  const pos = fi.indexOf(cur);
+  const npos = pos + dir;
+  if (npos >= 0 && npos < fi.length) { cur = fi[npos]; renderQ(); }
+};
+window.setSec = function(si) {
+  secFilter = si;
+  const fi = filtered();
+  if (!fi.includes(cur)) cur = fi[0];
+  renderSectionNav();
+  renderQ();
+};
+
+// ════════════════════════════════════════════════════════
+//  RESULT SCREEN
+// ════════════════════════════════════════════════════════
+window.showResult = function() {
+  const ans  = answers.filter(a=>a!==null).length;
+  const cor  = answers.filter((a,i)=>a!==null&&a===ALL[i].a).length;
+  const pct  = Math.round(cor/TOTAL*100);
+  const grades = [[90,'Excellent! 🎉'],[75,'Good job! 👍'],[60,'Passing ✓'],[0,'Needs more review 📚']];
+  const grade = grades.find(g=>pct>=g[0])[1];
+
+  document.getElementById('res-pct').textContent = pct+'%';
+  document.getElementById('res-grade').textContent = cor+' correct out of '+TOTAL+' — '+grade;
+  document.getElementById('r-total').textContent = TOTAL;
+  document.getElementById('r-ans').textContent = ans;
+  document.getElementById('r-cor').textContent = cor;
+  document.getElementById('r-wrg').textContent = ans - cor;
+
+  // dot map
+  const dots = ALL.map((q,i)=>{
+    const a = answers[i];
+    const cls = a===null?'u':a===q.a?'c':'w';
+    return `<div class="q-dot ${cls}" title="Q${i+1}: ${q.secName}" onclick="jumpTo(${i})">${i+1}</div>`;
+  }).join('');
+  document.getElementById('q-map').innerHTML = dots;
+
+  // per-section
+  const secHtml = SECTIONS.map((s,si)=>{
+    const sq = ALL.filter(q=>q.secIdx===si);
+    const sc = sq.filter(q=>answers[q.idx]===q.a).length;
+    return `<div class="sec-res"><span>${s.name}</span><span class="sec-res-score">${sc}/${sq.length}</span></div>`;
+  }).join('');
+  document.getElementById('sec-results').innerHTML = secHtml;
+
+  document.getElementById('exam-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+  document.querySelector('.stats-bar').style.display = 'none';
+  document.querySelector('.section-nav').style.display = 'none';
+};
+
+window.jumpTo = function(idx) {
+  cur = idx; secFilter = -1;
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('exam-screen').style.display = 'block';
+  document.querySelector('.stats-bar').style.display = 'flex';
+  document.querySelector('.section-nav').style.display = 'flex';
+  renderSectionNav(); renderQ();
+};
+
+window.restart = function() {
+  answers = new Array(TOTAL).fill(null);
+  revealed = new Array(TOTAL).fill(false);
+  cur = 0; secFilter = -1;
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('exam-screen').style.display = 'block';
+  document.querySelector('.stats-bar').style.display = 'flex';
+  document.querySelector('.section-nav').style.display = 'flex';
+  renderSectionNav(); renderQ(); updateStats();
+};
+
+window.reviewWrong = function() {
+  const wrong = ALL.findIndex((q,i)=>answers[i]!==null&&answers[i]!==q.a);
+  if (wrong !== -1) { cur = wrong; }
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('exam-screen').style.display = 'block';
+  document.querySelector('.stats-bar').style.display = 'flex';
+  document.querySelector('.section-nav').style.display = 'flex';
+  renderSectionNav(); renderQ();
+};
+
+window.reviewAll = function() {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('exam-screen').style.display = 'block';
+  document.querySelector('.stats-bar').style.display = 'flex';
+  document.querySelector('.section-nav').style.display = 'flex';
+  renderSectionNav(); renderQ();
+};
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+renderSectionNav();
+renderQ();
+updateStats();
+</script>
+</body>
+</html>
